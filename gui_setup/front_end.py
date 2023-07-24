@@ -62,7 +62,16 @@ def create_directory_map(folder_path):
     print(json.dumps(directory_map, indent=2))
     return directory_map
 
-
+def get_file_info(root,file):
+        file_path = os.path.join(root, file)
+        size = os.path.getsize(file_path)
+        tokens = 0
+        print(file_path)
+        content =read_with_different_encodings(file_path)
+        if content != None:
+            tokens = len(word_tokenize(content))
+        # Create a blank file in the replica folder
+        return {"name":file,"path":file_path,"size": size, "tokens": tokens}
 def extract_summary(file_path):
     """
     Extract a summary of the Python script.
@@ -310,15 +319,15 @@ def return_project_manager_layout():
     return [
         [sg.Text("Select a directory:")],
         [sg.Input(key="-FOLDER-", enable_events=True), sg.FolderBrowse()],
-        [sg.Tree(data=sg.TreeData(), headings=["Files"], auto_size_columns=True, num_rows=20, key="-TREE-")],
+        [sg.Tree(data=sg.TreeData(), headings=["name","path","size","tokens"], auto_size_columns=True, num_rows=20, key="-TREE-", expand_x= True,expand_y= True)],
         [sg.Button("Create Directory Map", key="-DIRECTORY_MAP-"),
          sg.Button("Find Third-Party Imports", key="-THIRD_PARTY_IMPORTS-"),
          sg.Button("Create Project", key="-CREATE_PROJECT-"),
          sg.Button("Create Module", key="-CREATE_MODULE-")],
-        [sg.Multiline(key="-OUTPUT-", size=(50, 10), disabled=True)]]
+        [sg.Multiline(key="-OUTPUT-", size=(50, 10), disabled=True, auto_size_text=True, expand_x= True,expand_y= True)]]
 
 sg.theme("DefaultNoMoreNagging")
-window = sg.Window("Abstract Utilities", return_project_manager_layout())
+window = sg.Window("Abstract Utilities", return_project_manager_layout(),resizable= True, auto_size_text=True)
 if 'parent' not in globals():
       globals()['parent'] = directory_map_GUI()
 while True:
@@ -358,7 +367,8 @@ while True:
         tree_data = sg.TreeData()
         for file in files:
             relative_path = get_relative_path(os.path.join(folder_path, file), folder_path)
-            tree_data.Insert("", relative_path, relative_path, [file])
+            info_js=get_file_info(folder_path,file)
+            tree_data.Insert("","project_1", "project_1", [info_js["name"],info_js["path"],info_js["size"],info_js[ "tokens"]])
         window["-TREE-"].Update(tree_data)
 
     if event == "-CREATE_PROJECT-":
@@ -380,4 +390,3 @@ while True:
             window["-OUTPUT-"].update("Please select a directory first!")
 
 window.close()
-
